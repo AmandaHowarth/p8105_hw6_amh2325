@@ -32,9 +32,53 @@ birthweight_clean = birthweight %>%
          frace = recode(frace, "1" = "white", "2" = "black", "3" = "asian", "4" = "puerto rican", "8" = "other", "9" = "unknown"),
          mrace = recode(mrace, "1" = "white", "2" = "black", "3" = "asian", "4" = "puerto rican", "8" = "other", "9" = "unknown"), 
          malform = recode(malform, "0" = "absent", "1" = "present")) %>%
-  rename(baby_wt_grams = bwt, mom_weight_lbs = delwt, family_income = fincome, father_race = frace, mom_race = mrace, ges_age_weeks = gaweeks, age_menerache = menarche, mom_height = mheight, mom_age = momage, mom_pre_bmi = ppbmi)
+  rename(bwt_grams = bwt, mom_weight_lbs = delwt, family_income = fincome, father_race = frace, mom_race = mrace, ges_age_weeks = gaweeks, age_menerache = menarche, mom_height = mheight, mom_age = momage, mom_pre_bmi = ppbmi)
 ```
-* fix some more names 
-* remove NA?
+
+## Model building
+I have hypothesized that a baby's physical and biological characteristics as well as the mother's physical and biological characteristics at the time of delivery would affect the baby's weight at birth. Thus, in building my model I analyzed baby's sex, head circumference, baby length, gestational age, and presence of malformations that would affect weight. Additionally, I analyzed mother's weight, age at delivery, and height. 
+
+* say that u removed some bc it did not increase in the R^2 
+* say looked at all of them first and then chose significant ones 
+* say teh R^2 value 
+* reisduals ? predictions? 
+
+```{r}
+fit_bwt_model = lm(bwt_grams ~ babysex + bhead + blength + mom_weight_lbs + ges_age_weeks, data = birthweight_clean)
+
+fit_bwt_model %>% 
+  broom::tidy()
+
+fit_bwt_model %>%
+  broom::glance()
+
+modelr::add_residuals(birthweight_clean, fit_bwt_model)
+
+birthweight_clean %>% 
+  modelr::add_residuals(fit_bwt_model) %>% 
+  ggplot(aes(x = pred, y = resid)) + geom_p
+```
+
+## Model using using length at birth and gestational age as predictors (main effects only)
+
+```{r}
+fit_2 = lm(bwt_grams ~  blength + ges_age_weeks, data = birthweight_clean)
+
+fit_2 %>% 
+  broom::tidy()
+```
+
+```{r}
 
 
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```

@@ -7,4 +7,34 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(rvest)
+library(tidyverse)
+library(purrr)
+library(broom)
+library(modelr)
+library(mgcv)
+library(patchwork)
 ```
+
+## Importing data
+```{r}
+birthweight = read_csv("./data/birthweight.csv")
+```
+```{r}
+birthweight_clean = birthweight %>% 
+  janitor::clean_names() %>% 
+  mutate(babysex = factor(babysex, levels = c("1", "2")),
+         frace = factor(frace, levels = c("1", "2", "3", "4", "8", "9")),
+         mrace = factor(mrace, levels = c("1", "2", "3", "4", "8", "9")),
+         malform = factor(malform, levels = c("0", "1")),
+         babysex = recode(babysex, "1" = "male", "2" = "female"), 
+         frace = recode(frace, "1" = "white", "2" = "black", "3" = "asian", "4" = "puerto rican", "8" = "other", "9" = "unknown"),
+         mrace = recode(mrace, "1" = "white", "2" = "black", "3" = "asian", "4" = "puerto rican", "8" = "other", "9" = "unknown"), 
+         malform = recode(malform, "0" = "absent", "1" = "present")) %>%
+  rename(baby_wt_grams = bwt, mom_weight_lbs = delwt, family_income = fincome, father_race = frace, mom_race = mrace, ges_age_weeks = gaweeks, age_menerache = menarche, mom_height = mheight, mom_age = momage, mom_pre_bmi = ppbmi)
+```
+* fix some more names 
+* remove NA?
+
+

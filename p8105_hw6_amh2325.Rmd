@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "HW6"
 author: "Amanda Howarth"
 date: "11/23/2019"
 output: github_document
@@ -32,7 +32,7 @@ birthweight_clean = birthweight %>%
          frace = recode(frace, "1" = "white", "2" = "black", "3" = "asian", "4" = "puerto rican", "8" = "other", "9" = "unknown"),
          mrace = recode(mrace, "1" = "white", "2" = "black", "3" = "asian", "4" = "puerto rican", "8" = "other", "9" = "unknown"), 
          malform = recode(malform, "0" = "absent", "1" = "present")) %>%
-  rename(bwt_grams = bwt, mom_weight_lbs = delwt, family_income = fincome, father_race = frace, mom_race = mrace, ges_age_weeks = gaweeks, age_menerache = menarche, mom_height = mheight, mom_age = momage, mom_pre_bmi = ppbmi)
+  rename(bwt_grams = bwt, mom_weight_lbs = delwt, family_income = fincome, father_race = frace, mom_race = mrace, ges_age_weeks = gaweeks, age_menarche = menarche, mom_height = mheight, mom_age = momage, mom_pre_bmi = ppbmi)
 ```
 
 ## Model building
@@ -42,37 +42,70 @@ I have hypothesized that a baby's physical and biological characteristics as wel
 * say looked at all of them first and then chose significant ones 
 * say teh R^2 value 
 * reisduals ? predictions? 
+* removed malform bc not significant 
 
 ```{r}
 fit_bwt_model = lm(bwt_grams ~ babysex + bhead + blength + mom_weight_lbs + ges_age_weeks, data = birthweight_clean)
 
 fit_bwt_model %>% 
-  broom::tidy()
+  broom::tidy() %>% 
+  knitr::kable()
 
 fit_bwt_model %>%
-  broom::glance()
+  broom::glance() %>% 
+  knitr::kable()
+```
 
-modelr::add_residuals(birthweight_clean, fit_bwt_model)
-
+Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+```{r}
+birthweight_clean %>% 
+  modelr::add_residuals(fit_bwt_model) %>% 
+  modelr::add_predictions(fit_bwt_model) %>% 
+  ggplot(aes(x = pred, y = resid)) + geom_point() + labs(
+    y = "Residuals", 
+    x = "Predicted values of Birthweight", 
+    title = "Residuals Plotted Against Birthweight"
+    
+  )
 ```
 
 ## Model using using length at birth and gestational age as predictors (main effects only)
 
 ```{r}
-fit_2 = lm(bwt_grams ~  blength + ges_age_weeks, data = birthweight_clean)
+sample_model_1 = lm(bwt_grams ~  blength + ges_age_weeks, data = birthweight_clean)
 
-fit_2 %>% 
-  broom::tidy()
+sample_model_1 %>% 
+  broom::tidy() %>% 
+  knitr::kable()
+
+sample_model_1 %>% 
+  broom::glance() %>% 
+  knitr::kable()
 ```
 
+## Model using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+
 ```{r}
+sample_model_2 = lm(bwt_grams ~ bhead + blength + babysex + bhead*blength + bhead*babysex + babysex*blength + bhead*blength*babysex, data = birthweight_clean)
 
+sample_model_2 %>% 
+  broom::tidy() %>% 
+  knitr::kable()
 
+sample_model_2 %>% 
+  broom::glance() %>% 
+  knitr::kable()
 ```
 
+## Cross Validation 
+
 ```{r}
+rmse(fit_bwt_model, birthweight_clean)
+rmse(sample_model_1, birthweight_clean)
+rmse(sample_model_2, birthweight_clean)
 
-
+cv_df = 
+  crossv_mc(birthweight_clean, 100) 
 ```
 
 ```{r}

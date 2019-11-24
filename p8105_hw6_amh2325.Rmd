@@ -54,9 +54,6 @@ fit_bwt_model %>%
 
 modelr::add_residuals(birthweight_clean, fit_bwt_model)
 
-birthweight_clean %>% 
-  modelr::add_residuals(fit_bwt_model) %>% 
-  ggplot(aes(x = pred, y = resid)) + geom_p
 ```
 
 ## Model using using length at birth and gestational age as predictors (main effects only)

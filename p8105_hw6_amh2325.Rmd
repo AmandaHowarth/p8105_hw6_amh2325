@@ -144,5 +144,81 @@ weather_df =
     tmin = tmin / 10,
     tmax = tmax / 10) %>%
   select(name, id, everything())
+```
+## Drawing repeated samples with replacement.
+```{r}
+boot_sample = function(df) {
+  sample_frac(weather_df, replace = TRUE)
+}
+
+boot_straps = 
+  data_frame(
+    strap_number = 1:5000,
+    strap_sample = rerun(5000, boot_sample(weather_df))
+  )
+boot_straps
+```
+
+## Analyzing bootstrap samples: Log(B0 * B1)
+```{r}
+bootstrap_results1 = 
+  boot_straps %>% 
+  mutate(
+    models = map(strap_sample, ~lm(tmax ~ tmin, data = .x)),
+    results = map(models, broom::tidy)) %>% 
+  select(-strap_sample, -models) %>% 
+  unnest(cols = c(results)) %>% 
+  select(strap_number, term, estimate) %>%
+  pivot_wider(
+    names_from = "term", 
+    values_from = "estimate") %>%
+  janitor::clean_names() %>% 
+  mutate(log_estimate = log(intercept*tmin)) %>% 
+  select(log_estimate)
 
 ```
+
+## Analyzing bootstrap samples: R^2
+```{r}
+bootstrap_results2 = 
+  boot_straps %>% 
+  mutate(
+    models = map(strap_sample, ~lm(tmax ~ tmin, data = .x)),
+    results = map(models, broom::glance)) %>% 
+      select(-strap_sample, -models) %>% 
+  unnest(cols = c(results)) %>% 
+  select(r.squared)
+```
+
+## Plot the distribution of your estimates, and describe these in words. 
+```{r}
+plot_log_estimate = bootstrap_results1 %>% 
+   ggplot(aes(x = log_estimate)) + geom_histogram() + labs(
+    y = "Count", 
+    x = "Log(B_0 * B_1)", 
+    title = "Distribtuion of Log(B_0 * B_1)"
+  )
+plot_log_estimate
+
+plot_r_squared = bootstrap_results2 %>% 
+  ggplot(aes(x = r.squared)) + geom_histogram() + labs(
+    y = "Count", 
+    x = "R Squared", 
+    title = "Distribtuion of R Squared ")
+plot_r_squared 
+
+plot_log_estimate + plot_r_squared 
+```
+Both distributions above appear to be relatively symmetric. Thus, the left and right hand sides seem to nearly mirror each other within the histograms. There is very slight left skew present in the histogram of R-squared. Because the distribution is approximately symmetric for the histogram of the log of B0 * B1, the mean, median, and mode would all be approximately equal to 2.01 for log of B0*B1. 
+For the histogram of R-squared, I will assume the histogram approximately follows a symmteric distribution, and thus its mean, median and mode would be the same value of ~0.91. 
+
+Using the 5000 bootstrap estimates, identify the 2.5% and 97.5% quantiles to provide a 95% confidence interval for r̂ 2 and log(β̂ 0∗β̂ 1)
+```{r}
+quantile(pull(bootstrap_results1, log_estimate), c(.0275, .975)) 
+# 2.75% = 1.9638   97.5% = 2.0592
+
+quantile(pull(bootstrap_results2, r.squared), c(.0275, .975)) 
+# 2.75% = 0.8946   97.5% = 0.9273
+```
+From the results above, we find that the confiden
+

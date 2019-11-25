@@ -23,6 +23,7 @@ library(patchwork)
 ```{r}
 birthweight = read_csv("./data/birthweight.csv")
 ```
+## Cleaning data 
 ```{r}
 birthweight_clean = birthweight %>% 
   janitor::clean_names() %>% 
@@ -40,12 +41,6 @@ birthweight_clean = birthweight %>%
 ## Model building
 I have hypothesized that a baby's physical and biological characteristics as well as the mother's physical and biological characteristics at the time of delivery would affect the baby's weight at birth. Thus, in building my model I analyzed baby's sex, head circumference, baby length, gestational age, and presence of malformations that would affect weight. Additionally, I analyzed mother's weight, age at delivery, and height. 
 
-* say that u removed some bc it did not increase in the R^2 
-* say looked at all of them first and then chose significant ones 
-* say teh R^2 value 
-* reisduals ? predictions? 
-* removed malform bc not significant 
-
 ```{r}
 fit_bwt_model = lm(bwt_grams ~ babysex + bhead + blength + mom_weight_lbs + ges_age_weeks, data = birthweight_clean)
 
@@ -58,7 +53,10 @@ fit_bwt_model %>%
   knitr::kable()
 ```
 
-Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+In my final model, I chose to include five final variables that I deemed to be clinically significant in predicting baby weight at birth: `babysex`, `bhead`, `blength`, `mom_weight_lbs`, and `ges_age_weeks`.I did not include `malform` (malformations that would affect weight) because its p-value was not statistically significant. However, for all other variables included in the final model above, they are statistically significant. I also analyzed the variables for `mom_age` and `mom_height` in the model, but they did not affect the R squared value (did not increase or decrease). I believe the five variables included in `fit_bwt_model` allow the model to be parsimonious while optimizing R^2. The value of R^2 is 0.6964, meaning 69.64% of the variability in birthweight is explained by: a baby's sex, baby's head circumference at birth, baby's length at birth, mother's weight at delivery, and gestational age in weeks. 
+
+
+## Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 ```{r}
 birthweight_clean %>% 
   modelr::add_residuals(fit_bwt_model) %>% 
@@ -72,7 +70,6 @@ birthweight_clean %>%
 ```
 
 ## Model using using length at birth and gestational age as predictors (main effects only)
-
 ```{r}
 sample_model_1 = lm(bwt_grams ~  blength + ges_age_weeks, data = birthweight_clean)
 
@@ -85,8 +82,9 @@ sample_model_1 %>%
   knitr::kable()
 ```
 
-## Model using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+The R^2 value in `sample_model1` (0.5769) is less than in `fit_bwt_model`. Thus, the variability in birthweight is better explained by `fit_bwt_model`.
 
+## Model using head circumference, length, sex, and all interactions (including the three-way interaction) between these
 ```{r}
 sample_model_2 = lm(bwt_grams ~ bhead + blength + babysex + bhead*blength + bhead*babysex + babysex*blength + bhead*blength*babysex, data = birthweight_clean)
 
@@ -99,8 +97,9 @@ sample_model_2 %>%
   knitr::kable()
 ```
 
-## Cross Validation 
+The R^2 value in `sample_model1` (0.6849) is less than in `fit_bwt_model` (although the values are very similar). The variability in birthweight is better explained by `fit_bwt_model`.
 
+## Cross Validation 
 ```{r}
 cv_df = 
   crossv_mc(birthweight_clean, 100) %>% 
@@ -130,8 +129,10 @@ cv_df %>%
 
 ```
 
-## Problem 2
+Through cross validation, we find that the first model (fit_bwt_model) has the lowest Root Mean Squared Error of all three models, indicating this model would be a better fit for this data. 
 
+
+## Problem 2
 ```{r}
 weather_df = 
   rnoaa::meteo_pull_monitors(
@@ -145,6 +146,7 @@ weather_df =
     tmax = tmax / 10) %>%
   select(name, id, everything())
 ```
+
 ## Drawing repeated samples with replacement.
 ```{r}
 boot_sample = function(df) {
@@ -175,7 +177,6 @@ bootstrap_results1 =
   janitor::clean_names() %>% 
   mutate(log_estimate = log(intercept*tmin)) %>% 
   select(log_estimate)
-
 ```
 
 ## Analyzing bootstrap samples: R^2
@@ -198,14 +199,12 @@ plot_log_estimate = bootstrap_results1 %>%
     x = "Log(B_0 * B_1)", 
     title = "Distribtuion of Log(B_0 * B_1)"
   )
-plot_log_estimate
 
 plot_r_squared = bootstrap_results2 %>% 
   ggplot(aes(x = r.squared)) + geom_histogram() + labs(
     y = "Count", 
     x = "R Squared", 
     title = "Distribtuion of R Squared ")
-plot_r_squared 
 
 plot_log_estimate + plot_r_squared 
 ```
@@ -215,10 +214,12 @@ For the histogram of R-squared, I will assume the histogram approximately follow
 Using the 5000 bootstrap estimates, identify the 2.5% and 97.5% quantiles to provide a 95% confidence interval for r̂ 2 and log(β̂ 0∗β̂ 1)
 ```{r}
 quantile(pull(bootstrap_results1, log_estimate), c(.0275, .975)) 
-# 2.75% = 1.9638   97.5% = 2.0592
 
 quantile(pull(bootstrap_results2, r.squared), c(.0275, .975)) 
-# 2.75% = 0.8946   97.5% = 0.9273
 ```
-From the results above, we find that the confiden
+From the results above, we see that the 95% confidence interval for the estimate of the  log(β̂ 0∗β̂1) is between 1.967 and 2.059.
+
+From the results above, we see that the 95% confidence interval for the estimate of the  log(β̂ 0∗β̂1) is between 0.895 and 0.927. 
+
+
 
